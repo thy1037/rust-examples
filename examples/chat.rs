@@ -122,7 +122,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         };
 
         behaviour.floodsub.subscribe(floodsub_topic.clone());
-        behaviour.floodsub.subscribe(floodsub::Topic::new("@thy").clone());
+        behaviour.floodsub.subscribe(floodsub::Topic::new("@name").clone());
         Swarm::new(transport, behaviour, local_peer_id)
     };
 
