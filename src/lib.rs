@@ -25,6 +25,11 @@
 // example from Msg
 //
 
+///
+/// ```
+/// assert!(true);
+/// ```
+/// 
 mod handler;
 mod protocol;
 

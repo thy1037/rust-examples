@@ -122,6 +122,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         };
 
         behaviour.floodsub.subscribe(floodsub_topic.clone());
+        behaviour.floodsub.subscribe(floodsub::Topic::new("@thy").clone());
         Swarm::new(transport, behaviour, local_peer_id)
     };
 
@@ -141,10 +142,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Kick it off
     loop {
         select! {
-            line = stdin.select_next_some() => swarm
+            line = stdin.select_next_some() => {
+                let topic;
+                let mut msg = line.expect("Stdin not to close");
+                if msg.starts_with("@") && msg.contains(" ") {
+                    let v: Vec<&str> = msg.split(' ').collect();
+                    println!("topic: {}", v[0]);
+                    topic = floodsub::Topic::new(v[0]);
+                    msg = v[1].to_string();
+                } else {
+                    println!("topic: {}", "chat");
+                    topic = floodsub_topic.clone();
+                }
+                
+                swarm
                 .behaviour_mut()
                 .floodsub
-                .publish(floodsub_topic.clone(), line.expect("Stdin not to close").as_bytes()),
+                .publish(topic, msg);
+            }
             event = swarm.select_next_some() => match event {
                 SwarmEvent::NewListenAddr { address, .. } => {
                     println!("Listening on {:?}", address);
@@ -152,6 +167,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 SwarmEvent::Behaviour(OutEvent::Floodsub(
                     FloodsubEvent::Message(message)
                 )) => {
+                    // if let Some((token, msg)) = String::from_utf8_lossy(&message.data).split_once(' ') {
+                    //     if token == "@thy" {
+                    //         println!(
+                    //             "Received: '{:?}' from {:?}",
+                    //             msg,
+                    //             message.source
+                    //         );
+                    //     }
+                    // }
                     println!(
                         "Received: '{:?}' from {:?}",
                         String::from_utf8_lossy(&message.data),
